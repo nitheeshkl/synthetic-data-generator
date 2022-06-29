@@ -1,0 +1,46 @@
+
+scene:
+  _target_: scene.Scene
+  cfg:
+    num_objs: 100
+  container:
+    _target_: scene.Container
+    extents:
+      _target_: scene.Extents
+      x : 0.4
+      y : 0.2
+      z : 0.2
+    thickness: 0.02
+  object:
+    _target_: scene.Object
+    ID : 23
+    extents:
+      _target_: scene.Extents
+      x : 1
+      y : 2
+      z : 3
+  floor:
+    _target_: scene.Floor
+    extents:
+      _target_: scene.Extents
+      x : 5
+      y : 5
+      z : 5
+    location:
+      _target_: scene.Location
+      x : 0
+      y : 0
+      z : -5
+  light:
+    _target_: scene.Light
+    energy : 200
+    color:
+      _target_: scene.Color
+      r : 0.5
+      g : 0.5
+      b : 0.5
+    location:
+      _target_: scene.Location
+      x : 0
+      y : 0
+      z : 1.02

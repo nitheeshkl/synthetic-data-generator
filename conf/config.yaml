@@ -43,3 +43,8 @@ scene:
       extents: [0.4, 0.2, 0.2]
       thickness: 0.02
       texture_dir : "/home/mujin/sandbox/mujin/repos/BlenderProc/resources/cctextures/Plastic008/"
+dataset:
+  output_dir : "/home/mujin/sandbox/mujin/repos/datasets/bop/ucn_2"
+  name : "hope"
+  rgb_img_format : "PNG"
+  ignore_dist_thres: 10

@@ -145,6 +145,39 @@ class Scene:
             texture = load_cc_texture(self._cfg.container.texture_dir)
             self._container.replace_materials(texture)
 
+    def empty_container(self):
+        bproc.object.delete_multiple(self._objs_in_container)
+
+    def render(self, cfg):
+        ## activate depth rendering
+        bproc.renderer.enable_depth_output(activate_antialiasing=False)
+        bproc.renderer.set_max_amount_of_samples(50)
+
+        ## render the whole pipeline
+        data = bproc.renderer.render()
+
+        ## Render segmentation masks (per class and per instance)
+        data.update(bproc.renderer.render_segmap(map_by=["class", "instance", "name"]))
+
+        ## Write data in bop format
+        bproc.writer.write_bop(
+            os.path.join(cfg.output_dir, "bop_data"),
+            dataset=cfg.name,
+            depths=data["depth"],
+            colors=data["colors"],
+            color_file_format=cfg.rgb_img_format,
+            ignore_dist_thres=cfg.ignore_dist_thres,
+        )
+
+        bproc.writer.write_coco_annotations(
+            os.path.join(cfg.output_dir, "coco_data"),
+            instance_segmaps=data["instance_segmaps"],
+            instance_attribute_maps=data["instance_attribute_maps"],
+            colors=data["instance_segmaps"],
+            color_file_format=cfg.rgb_img_format,
+            mask_encoding_format="rle",
+        )
+
     def drop_objs_into_container(self, sample_obj, num_objs, batch_size):
         sample_obj.set_location([0, 0, -0.2])  # place sample obj outside container
         objs_to_keep = []
@@ -191,7 +224,7 @@ class Scene:
             print("deleting {} objs outside container".format(len(objs_to_delete)))
             bproc.object.delete_multiple(objs_to_delete)
 
-        bproc.object.delete_multiple([sample_obj])
+        # bproc.object.delete_multiple([sample_obj])
 
         self._objs_in_container = objs_to_keep
 

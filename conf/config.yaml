@@ -11,14 +11,13 @@ scene:
       y : 0.2
       z : 0.2
     thickness: 0.02
+    texture_dir : /home/mujin/sandbox/mujin/repos/BlenderProc/resources/cctextures/Plastic008/
   object:
     _target_: scene.Object
     ID : 23
-    extents:
-      _target_: scene.Extents
-      x : 1
-      y : 2
-      z : 3
+    bop_dataset_path : /home/mujin/sandbox/mujin/repos/datasets/bop
+    bop_dataset_name: hope
+    mm2m : true
   floor:
     _target_: scene.Floor
     extents:
@@ -44,3 +43,38 @@ scene:
       x : 0
       y : 0
       z : 1.02
+  light_plane:
+    _target_: scene.LightPlane
+    emission_strength : 5.36
+    emission_color:
+      _target_: scene.Color
+      r : 0.5
+      g : 0.5
+      b : 0.5
+    extents:
+      _target_: scene.Extents
+      x : 2
+      y : 2
+      z : 1
+    location:
+      _target_: scene.Location
+      x : 0
+      y : 0
+      z : 1.5
+  camera:
+    _target_: scene.Camera
+    location:
+      _target_: scene.Location
+      x : 0.0
+      y : 0.0
+      z : 1.0
+    intrinsics:
+      _target_: scene.Intrinsics
+      fx : 2765.610107421875
+      fy : 2765.087158203125
+      cx : 964.0423768127082
+      cy : 583.8270604909656
+    image_size:
+      _target_: scene.ImageSize
+      w : 1920
+      h : 1080

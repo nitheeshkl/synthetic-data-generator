@@ -80,3 +80,7 @@ venv.bak/
 
 # generate output
 outputs
+examples/
+
+# Vistual studio code editor files
+.vscode/

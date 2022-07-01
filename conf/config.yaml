@@ -6,7 +6,7 @@ num_objs: 10
 batch_size: 10
 pack_type: "random"
 dataset:
-  output_dir : "/home/mujin/sandbox/mujin/repos/datasets/bop/ucn_2"
+  output_dir : "/home/mujin/sandbox/mujin/repos/datasets/bop/ucn"
   name : "hope"
   rgb_img_format : "PNG"
   ignore_dist_thres: 10

@@ -16,6 +16,8 @@ import hydra
 from hydra.utils import instantiate
 from scene import Scene, load_object_model
 
+import numpy as np
+
 
 def render(cfg):
     ## render the whole pipeline
@@ -48,20 +50,26 @@ def render(cfg):
 def main(cfg: DictConfig) -> None:
 
     bproc.init()
-    scene = instantiate(cfg.scene)
+    scene = Scene(cfg.scene)
     obj = load_object_model(cfg.object)
+
+    print("OBJ ID=", cfg.object.ID)
 
     ## activate depth rendering
     bproc.renderer.enable_depth_output(activate_antialiasing=False)
     bproc.renderer.set_max_amount_of_samples(50)
 
-    for i in range(5):
+    for i in range(cfg.dataset.num_images):
         if cfg.pack_type == "random":
-            scene.drop_objs_into_container(obj, cfg.num_objs, cfg.batch_size)
+            num_objs = np.random.randint(cfg.batch_size, cfg.num_objs)
+            objs_in_container = scene.drop_objs_into_container(
+                obj, num_objs, cfg.batch_size
+            )
 
-        render(cfg.dataset)
+        if len(objs_in_container) > 0:
+            render(cfg.dataset)
+
         scene.empty_container()
-        print("iter ", i)
 
 
 if __name__ == "__main__":

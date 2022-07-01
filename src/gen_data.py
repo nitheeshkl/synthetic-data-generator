@@ -46,39 +46,6 @@ def render(cfg):
     )
 
 
-def random_pose(obj):
-    loc = obj.get_location()
-    r = R.identity()
-    combinations = np.array(
-        [
-            [0, 0, 0],
-            [0, 0, 1],
-            [0, 1, 0],
-            [0, 1, 1],
-            [1, 0, 0],
-            [1, 0, 1],
-            [1, 1, 0],
-            [1, 1, 1],
-        ]
-    )
-    rand_comb = combinations[np.random.randint(0, 8)]
-    for i in range(3):
-        if rand_comb[i] == 1:
-            if i == 0:  # rot x
-                print("rotating x")
-                r = R.from_euler("x", np.random.choice([-np.pi / 2, np.pi / 2])) * r
-            if i == 1:  # rot y
-                print("rotating y")
-                r = R.from_euler("y", np.random.choice([-np.pi / 2, np.pi / 2])) * r
-            if i == 2:  # rot z
-                print("rotating z")
-                r = R.from_euler("z", np.random.choice([-np.pi / 2, np.pi / 2])) * r
-    t = bproc.math.build_transformation_mat(loc, r.as_matrix())
-    obj.apply_T(t)
-
-    return obj
-
-
 @hydra.main(version_base=None, config_path=CONF_DIR, config_name="config")
 def main(cfg: DictConfig) -> None:
 
@@ -86,13 +53,12 @@ def main(cfg: DictConfig) -> None:
     scene = Scene(cfg.scene)
     obj = load_object_model(cfg.object)
 
-    obj = random_pose(obj)
-
     ## activate depth rendering
     bproc.renderer.enable_depth_output(activate_antialiasing=False)
     bproc.renderer.set_max_amount_of_samples(50)
 
     for i in range(cfg.dataset.num_images):
+
         if cfg.pack_type == "random":
             num_objs = np.random.randint(cfg.batch_size, cfg.num_objs)
             objs_in_container = scene.drop_objs_into_container(

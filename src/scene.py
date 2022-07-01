@@ -1,3 +1,4 @@
+from random import sample
 from omegaconf import DictConfig, OmegaConf
 import hydra
 from collections import namedtuple
@@ -183,6 +184,8 @@ class Scene:
         :return: list of objects in the container.
         """
         sample_obj.set_location([0, 0, -0.2])  # place sample obj outside container
+        sample_obj = random_pose(sample_obj)
+        obj_x, obj_y, obj_z = sample_obj.blender_obj["extents"]
         objs_to_keep = []  # holds the objects in the container
 
         # Define a function that samples 6-DoF poses
@@ -217,12 +220,17 @@ class Scene:
             # collect objects outside the container to delete
             objs_to_delete = []
             for obj in objs:
-                objx, objy, objz = obj.get_location()
+                try:
+                    objx, objy, objz = obj.get_location()
+                except Exception as e:
+                    print("Exception:\n", e)
+                    objs_to_delete.append(obj)
+                    continue
 
                 if (
-                    objz < 0
-                    or (objz + obj.blender_obj.dimensions[2] / 2)
-                    > self._cfg.container.extents[2]
+                    objz < -0.001
+                    or objz > self._cfg.container.extents[2]
+                    or (objz + obj_z / 2) > self._cfg.container.extents[2]
                 ):
                     objs_to_delete.append(obj)
                 else:
@@ -248,20 +256,21 @@ class Scene:
 
         :return: list of objects in the container.
         """
-        sample_obj.set_location([0, 0, -0.2])  # place sample obj outside container
-
         # TODO: cleanup code to order objects in container.
 
         # objects are places starting from the back right corner from bottom.
         # objects are stacked on top rows until max_z (container height) is
         # reached, and then moves to the row in front.
 
+        sample_obj.set_location([0, 0, -0.2])  # place sample obj outside container
+        obj1 = sample_obj.duplicate()
+        sample_obj = random_pose(sample_obj)
+
         cont_x, cont_y, cont_z = self._cfg.container.extents
         start_x, start_y, start_z = cont_x / 2, cont_y / 2, 0
-        obj_x, obj_y, obj_z = sample_obj.blender_obj.dimensions
+        obj_x, obj_y, obj_z = sample_obj.blender_obj["extents"]
         dx, dy, dz = self._cfg.container.pack_object_spacing
         rot_x, rot_y, rot_z = 0, 0, 0
-        r = R.identity()
         r = R.from_euler("xyz", sample_obj.get_rotation())
         new_obj_x, new_obj_y, new_obj_z = obj_x + dx, obj_y + dy, obj_z + dz
         obj_stack = [num_objs - i for i in range(num_objs)]
@@ -281,8 +290,8 @@ class Scene:
                 print("reached z, checking for better pose")
 
                 # check for best pose to fit z
-                x_objs = cont_z // new_obj_x
-                y_objs = cont_z // new_obj_y
+                x_objs = (cont_z - start_z) // new_obj_x
+                y_objs = (cont_z - start_z) // new_obj_y
                 print("x_objs={}, y_objs={}".format(x_objs, y_objs))
                 prev_state = (new_obj_x, new_obj_y, new_obj_z, r)
                 if x_objs > y_objs:  # then rotate around y
@@ -370,7 +379,7 @@ class Scene:
             z = start_z + new_obj_z / 2
 
             i = obj_stack.pop()
-            obj = sample_obj.duplicate()
+            obj = obj1.duplicate()
             print(
                 "placing obj {}. r=[{},{},{}] e=[{}, {}, {}]".format(
                     i, rot_x, rot_y, rot_z, new_obj_x, new_obj_y, new_obj_z
@@ -382,7 +391,7 @@ class Scene:
             t = bproc.math.build_transformation_mat([x, y, z], r.as_matrix())
             obj.apply_T(t)
             objx, objy, objz = obj.get_location()
-            if (objz - new_obj_z / 2) < 0 or (objz + new_obj_z / 2) > cont_z:
+            if (objz - new_obj_z / 2) < -0.001 or (objz + new_obj_z / 2) > cont_z:
                 objs_to_del.append(obj)
                 print(
                     "removing obj ",
@@ -396,11 +405,52 @@ class Scene:
 
             start_x -= new_obj_x
 
-        bproc.object.delete_multiple(objs_to_del)
+        bproc.object.delete_multiple([obj1] + objs_to_del)
 
         self._objs_in_container = objs_to_keep
 
         return self._objs_in_container
+
+
+def random_pose(obj):
+    obj_x, obj_y, obj_z = obj.blender_obj.dimensions
+    loc = obj.get_location()
+    r = R.identity()
+    combinations = np.array(
+        [
+            [0, 0, 0],
+            [0, 0, 1],
+            [0, 1, 0],
+            [0, 1, 1],
+            [1, 0, 0],
+            [1, 0, 1],
+            [1, 1, 0],
+            [1, 1, 1],
+        ]
+    )
+    rand_comb = combinations[np.random.randint(0, 8)]
+    for i in range(3):
+        if rand_comb[i] == 1:
+            if i == 2:  # rot x
+                print("rotating x")
+                r = R.from_euler("x", np.random.choice([-np.pi / 2, np.pi / 2])) * r
+                _obj_x, _obj_y, _obj_z = obj_x, obj_y, obj_z
+                obj_x, obj_y, obj_z = _obj_x, _obj_z, _obj_y
+            if i == 1:  # rot y
+                print("rotating y")
+                r = R.from_euler("y", np.random.choice([-np.pi / 2, np.pi / 2])) * r
+                _obj_x, _obj_y, _obj_z = obj_x, obj_y, obj_z
+                obj_x, obj_y, obj_z = _obj_z, _obj_y, _obj_x
+            if i == 0:  # rot z
+                print("rotating z")
+                r = R.from_euler("z", np.random.choice([-np.pi / 2, np.pi / 2])) * r
+                _obj_x, _obj_y, _obj_z = obj_x, obj_y, obj_z
+                obj_x, obj_y, obj_z = _obj_y, _obj_x, _obj_z
+    t = bproc.math.build_transformation_mat(loc, r.as_matrix())
+    obj.apply_T(t)
+    # FIXME: find a better way to handle object extents
+    obj.blender_obj["extents"] = [obj_x, obj_y, obj_z]
+    return obj
 
 
 def build_container(cont_extents, cont_thickness):

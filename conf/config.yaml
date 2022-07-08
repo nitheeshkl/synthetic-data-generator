@@ -1,6 +1,6 @@
 defaults:
   - object: raisins
-  - scene/base
+  - scene: base
 
 num_objs: 10
 batch_size: 10
@@ -10,4 +10,5 @@ dataset:
   name : "hope"
   rgb_img_format : "PNG"
   ignore_dist_thres: 10
-  num_images: 10
+  num_scenes: 10
+  num_poses_per_scene: 1

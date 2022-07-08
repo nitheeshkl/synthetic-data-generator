@@ -1,3 +1,4 @@
+from ctypes import set_errno
 from random import sample
 from omegaconf import DictConfig, OmegaConf
 import hydra
@@ -45,8 +46,9 @@ class Scene:
         """
         self.__create_floor()
         self.__create_lighting()
-        self.__init_camera()
         self.__create_container()
+        self.__init_camera()
+        self.__init_renderer()
 
     def reset(self) -> None:
         """
@@ -81,8 +83,48 @@ class Scene:
         k_mat[0][2], k_mat[1][2] = cx, cy
 
         CameraUtility.set_intrinsics_from_K_matrix(k_mat, img_w, img_h)
-        cam2world_matrix = bproc.math.build_transformation_mat(np.array(loc), np.eye(3))
-        bproc.camera.add_camera_pose(cam2world_matrix)
+
+        # set initial random pose
+        self.add_rand_cam_pose()
+
+
+    def __init_renderer(self) -> None:
+        """ Initalize render settings. """
+
+        # activate depth rendering
+        bproc.renderer.enable_depth_output(activate_antialiasing=False)
+        # activate normals
+        bproc.renderer.enable_normals_output()
+    
+        bproc.renderer.set_max_amount_of_samples(50)
+
+    def add_rand_cam_pose(self, frame: int = None) -> None:
+        """ Add a rander camera pose looking at the container.
+
+        :param frame: keyframe to add the pose into.
+        """
+        # Sample location
+        location = bproc.sampler.shell(center = [0, 0, 0],
+                                radius_min = 1.0,
+                                radius_max = 1.6,
+                                elevation_min = 70,
+                                elevation_max = 95,
+                                azimuth_min = 0,
+                                azimuth_max = 180,
+                                uniform_volume = True)
+        # Determine point of interest in scene as the object closest to the mean of a subset of objects
+        poi = bproc.object.compute_poi([self._container])
+        # Compute rotation based on vector going from location towards poi
+        rotation_matrix = bproc.camera.rotation_from_forward_vec(poi - location, inplane_rot=np.random.uniform(-0.7854, 0.7854))
+        # Add homog cam pose based on location an rotation
+        cam2world_matrix = bproc.math.build_transformation_mat(location, rotation_matrix)
+
+        # loc = Location(*self._cfg.camera.location)
+        # cam2world_matrix = bproc.math.build_transformation_mat(loc, np.eye(3))
+
+
+        # cam2world_matrix = bproc.math.build_transformation_mat(np.array(loc), np.eye(3))
+        bproc.camera.add_camera_pose(cam2world_matrix, frame=frame)
 
     def __create_floor(self) -> None:
         """
@@ -112,18 +154,18 @@ class Scene:
         self._light.set_color(self._cfg.light.color)
         self._light.set_location(self._cfg.light.location)
 
-        self._light_plane = bproc.object.create_primitive(
-            "PLANE",
-            scale=self._cfg.light_plane.extents,
-            location=self._cfg.light_plane.location,
-        )
-        self._light_plane.set_name("light_plane")
-        material = bproc.material.create("light_material")
-        material.make_emissive(
-            emission_strength=self._cfg.light_plane.emission_strength,
-            emission_color=self._cfg.light_plane.emission_color,
-        )
-        self._light_plane.replace_materials(material)
+        # self._light_plane = bproc.object.create_primitive(
+        #     "PLANE",
+        #     scale=self._cfg.light_plane.extents,
+        #     location=self._cfg.light_plane.location,
+        # )
+        # self._light_plane.set_name("light_plane")
+        # material = bproc.material.create("light_material")
+        # material.make_emissive(
+        #     emission_strength=self._cfg.light_plane.emission_strength,
+        #     emission_color=self._cfg.light_plane.emission_color,
+        # )
+        # self._light_plane.replace_materials(material)
 
     def __create_container(self) -> None:
         """" Create container either by building a custom one or loading a container model. """
@@ -169,6 +211,29 @@ class Scene:
         """ Deletes all objects in container. """
         if self._objs_in_container:
             bproc.object.delete_multiple(self._objs_in_container)
+
+    def render(self, num_poses: int=1) -> dict:
+        """ Render the scene.
+        
+        :param num_poses: number of random poses to render from the scene.
+
+        :return: data dict returned from blender render
+        """
+
+        # remove all existing keyframes
+        bproc.utility.reset_keyframes()
+
+        # generate camera poses
+        for i in range(num_poses):
+            self.add_rand_cam_pose()
+
+        # render the whole scene
+        data = bproc.renderer.render()
+
+        # Render segmentation masks (per class and per instance)
+        data.update(bproc.renderer.render_segmap(map_by=["class", "instance", "name"]))
+
+        return data 
 
     def drop_objs_into_container(
         self, sample_obj: MeshObject, num_objs: int, batch_size: int

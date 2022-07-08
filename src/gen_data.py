@@ -18,15 +18,12 @@ from scene import Scene, load_object_model
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
+import debugpy
+debugpy.listen(5678)
+debugpy.wait_for_client()
 
-def render(cfg):
-    ## render the whole pipeline
-    data = bproc.renderer.render()
-
-    ## Render segmentation masks (per class and per instance)
-    data.update(bproc.renderer.render_segmap(map_by=["class", "instance", "name"]))
-
-    ## Write data in bop format
+def write_data(cfg, data):
+    # Write data in bop format
     bproc.writer.write_bop(
         os.path.join(cfg.output_dir, "bop_data"),
         dataset=cfg.name,
@@ -45,6 +42,7 @@ def render(cfg):
         mask_encoding_format="rle",
     )
 
+    return
 
 @hydra.main(version_base=None, config_path=CONF_DIR, config_name="config")
 def main(cfg: DictConfig) -> None:
@@ -53,11 +51,7 @@ def main(cfg: DictConfig) -> None:
     scene = Scene(cfg.scene)
     obj = load_object_model(cfg.object)
 
-    ## activate depth rendering
-    bproc.renderer.enable_depth_output(activate_antialiasing=False)
-    bproc.renderer.set_max_amount_of_samples(50)
-
-    for i in range(cfg.dataset.num_images):
+    for i in range(cfg.dataset.num_scenes):
 
         if cfg.pack_type == "random":
             num_objs = np.random.randint(cfg.batch_size, cfg.num_objs)
@@ -71,8 +65,10 @@ def main(cfg: DictConfig) -> None:
             objs_in_container = []
 
         if len(objs_in_container) > 0:
-            render(cfg.dataset)
+            data = scene.render(num_poses=cfg.dataset.num_poses_per_scene)
+            write_data(cfg.dataset, data)
             scene.empty_container()
+            print("rendered ", i)
         else:
             print("no objects in container!!")
 

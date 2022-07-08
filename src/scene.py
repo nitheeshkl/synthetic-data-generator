@@ -223,15 +223,18 @@ class Scene:
         # remove all existing keyframes
         bproc.utility.reset_keyframes()
 
+        cam_poses = []
         # generate camera poses
         for i in range(num_poses):
             self.add_rand_cam_pose()
-
+            cam_poses.append(CameraUtility.get_camera_pose())
         # render the whole scene
         data = bproc.renderer.render()
 
         # Render segmentation masks (per class and per instance)
         data.update(bproc.renderer.render_segmap(map_by=["class", "instance", "name"]))
+
+        data['cam_pose'] = cam_poses
 
         return data 
 
@@ -248,7 +251,7 @@ class Scene:
 
         :return: list of objects in the container.
         """
-        sample_obj.set_location([0, 0, -0.2])  # place sample obj outside container
+        sample_obj.set_location([0, 0, 5])  # place sample obj outside container
         sample_obj = random_pose(sample_obj)
         obj_x, obj_y, obj_z = sample_obj.blender_obj["extents"]
         objs_to_keep = []  # holds the objects in the container
@@ -311,7 +314,7 @@ class Scene:
 
         return self._objs_in_container
 
-    def order_objs_in_container(self, sample_obj, num_objs):
+    def order_objs_in_container(self, sample_object, num_objs):
         """  Pack objects in the container in an orderly fashion.
  
         :param sample_obj: The object to be replicated and dropped into the
@@ -327,9 +330,9 @@ class Scene:
         # objects are stacked on top rows until max_z (container height) is
         # reached, and then moves to the row in front.
 
-        sample_obj.set_location([0, 0, -0.2])  # place sample obj outside container
-        obj1 = sample_obj.duplicate()
-        sample_obj = random_pose(sample_obj)
+        sample_object.set_location([0, 0, 5])  # place sample obj outside container
+        obj1 = sample_object.duplicate()
+        sample_obj = random_pose(obj1)
 
         cont_x, cont_y, cont_z = self._cfg.container.extents
         start_x, start_y, start_z = cont_x / 2, cont_y / 2, 0
@@ -444,7 +447,7 @@ class Scene:
             z = start_z + new_obj_z / 2
 
             i = obj_stack.pop()
-            obj = obj1.duplicate()
+            obj = sample_object.duplicate()
             print(
                 "placing obj {}. r=[{},{},{}] e=[{}, {}, {}]".format(
                     i, rot_x, rot_y, rot_z, new_obj_x, new_obj_y, new_obj_z
@@ -470,7 +473,7 @@ class Scene:
 
             start_x -= new_obj_x
 
-        bproc.object.delete_multiple([obj1] + objs_to_del)
+        bproc.object.delete_multiple([obj1,sample_obj] + objs_to_del)
 
         self._objs_in_container = objs_to_keep
 
@@ -493,7 +496,9 @@ def random_pose(obj):
             [1, 1, 1],
         ]
     )
-    rand_comb = combinations[np.random.randint(0, 8)]
+    choice = np.random.randint(0, 8)
+    rand_comb = combinations[choice]
+    print("generating randome pose with choice = ", choice)
     for i in range(3):
         if rand_comb[i] == 1:
             if i == 2:  # rot x

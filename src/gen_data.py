@@ -14,15 +14,19 @@ from omegaconf import DictConfig, OmegaConf
 import hydra
 from hydra.utils import instantiate
 from scene import Scene, load_object_model
+from data_writer import DataWriter
 
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
-import debugpy
-debugpy.listen(5678)
-debugpy.wait_for_client()
+# import debugpy
+# debugpy.listen(5678)
+# debugpy.wait_for_client()
 
 def write_data(cfg, data):
+
+    bproc.writer.write_hdf5(os.path.join(cfg.output_dir, "hdf5"), data)
+
     # Write data in bop format
     bproc.writer.write_bop(
         os.path.join(cfg.output_dir, "bop_data"),
@@ -50,6 +54,7 @@ def main(cfg: DictConfig) -> None:
     bproc.init()
     scene = Scene(cfg.scene)
     obj = load_object_model(cfg.object)
+    data_writer = DataWriter(cfg.dataset)
 
     for i in range(cfg.dataset.num_scenes):
 
@@ -66,8 +71,10 @@ def main(cfg: DictConfig) -> None:
 
         if len(objs_in_container) > 0:
             data = scene.render(num_poses=cfg.dataset.num_poses_per_scene)
-            write_data(cfg.dataset, data)
-            scene.empty_container()
+            data_writer.write_data(data)
+            # write_data(cfg.dataset, data)
+            if i+1 != cfg.dataset.num_scenes:
+                scene.empty_container()
             print("rendered ", i)
         else:
             print("no objects in container!!")

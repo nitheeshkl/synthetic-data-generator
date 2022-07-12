@@ -25,7 +25,7 @@ light:
   color: [0.5, 0.5, 0.5]
   location: [.4, .2, 1.5]
 light_plane:
-  emission_strength : 5.36
+  emission_strength : 0.5
   emission_color: [0.5, 0.5, 0.5, 1.0]
   extents: [2, 2, 1]
   location: [0, 0, 1.7]

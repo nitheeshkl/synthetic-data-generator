@@ -154,18 +154,18 @@ class Scene:
         self._light.set_color(self._cfg.light.color)
         self._light.set_location(self._cfg.light.location)
 
-        # self._light_plane = bproc.object.create_primitive(
-        #     "PLANE",
-        #     scale=self._cfg.light_plane.extents,
-        #     location=self._cfg.light_plane.location,
-        # )
-        # self._light_plane.set_name("light_plane")
-        # material = bproc.material.create("light_material")
-        # material.make_emissive(
-        #     emission_strength=self._cfg.light_plane.emission_strength,
-        #     emission_color=self._cfg.light_plane.emission_color,
-        # )
-        # self._light_plane.replace_materials(material)
+        self._light_plane = bproc.object.create_primitive(
+            "PLANE",
+            scale=self._cfg.light_plane.extents,
+            location=self._cfg.light_plane.location,
+        )
+        self._light_plane.set_name("light_plane")
+        material = bproc.material.create("light_material")
+        material.make_emissive(
+            emission_strength=self._cfg.light_plane.emission_strength,
+            emission_color=self._cfg.light_plane.emission_color,
+        )
+        self._light_plane.replace_materials(material)
 
     def __create_container(self) -> None:
         """" Create container either by building a custom one or loading a container model. """

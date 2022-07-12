@@ -23,5 +23,5 @@ overrides=(
 
 for opt in "${overrides[@]}";do
     echo "running: blenderproc run ./src/gen_data.py scene=scene2 dataset.num_poses_per_scene=5 ${opt}"
-    blenderproc run ./src/gen_data.py ${opt} || true
+    blenderproc run ./src/gen_data.py scene=scene2 dataset.num_poses_per_scene=5 ${opt} || true
 done

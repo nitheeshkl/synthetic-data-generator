@@ -94,7 +94,7 @@ class Scene:
         # activate depth rendering
         bproc.renderer.enable_depth_output(activate_antialiasing=False)
         # activate normals
-        bproc.renderer.enable_normals_output()
+        # bproc.renderer.enable_normals_output()
     
         bproc.renderer.set_max_amount_of_samples(50)
 
@@ -105,9 +105,9 @@ class Scene:
         """
         # Sample location
         location = bproc.sampler.shell(center = [0, 0, 0],
-                                radius_min = 1.0,
-                                radius_max = 1.6,
-                                elevation_min = 70,
+                                radius_min = 1.3,
+                                radius_max = 1.5,
+                                elevation_min = 80,
                                 elevation_max = 95,
                                 azimuth_min = 0,
                                 azimuth_max = 180,

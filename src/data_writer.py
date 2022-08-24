@@ -42,14 +42,14 @@ class DataWriter:
             rgb = data["colors"][i]
             depth = data["depth"][i]
             mask = data["instance_segmaps"][i]
-            normals = data["normals"][i]
+            # normals = data["normals"][i]
             cam_pose = data["cam_pose"][i]
 
-            partial_depth = self.process_depth(depth, normals, mask, cam_pose)
+            # partial_depth = self.process_depth(depth, normals, mask, cam_pose)
 
             # meter to mm
             depth = depth * 1000.0
-            partial_depth = partial_depth * 1000.0
+            # partial_depth = partial_depth * 1000.0
 
             rgb_img = os.path.join(self._color_dir, "{:06d}.png".format(self._file_idx))
             depth_img = os.path.join(
@@ -69,8 +69,8 @@ class DataWriter:
             imageio.imwrite(rgb_img, rgb)
             imageio.imwrite(mask_img, mask)
             np.save(depth_img, depth)
-            np.save(partial_depth_img, partial_depth)
-            np.save(normals_img, normals)
+            # np.save(partial_depth_img, partial_depth)
+            # np.save(normals_img, normals)
             np.save(cam_pose_file, cam_pose)
 
             self._file_idx += 1

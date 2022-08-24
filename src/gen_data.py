@@ -59,12 +59,14 @@ def main(cfg: DictConfig) -> None:
     for i in range(cfg.dataset.num_scenes):
 
         if cfg.pack_type == "random":
-            num_objs = np.random.randint(cfg.batch_size, cfg.num_objs)
+            # num_objs = np.random.randint(cfg.batch_size, cfg.num_objs)
+            num_objs = cfg.num_objs
             objs_in_container = scene.drop_objs_into_container(
                 obj, num_objs, cfg.batch_size
             )
         elif cfg.pack_type == "ordered":
-            num_objs = np.random.randint(cfg.batch_size, cfg.num_objs)
+            # num_objs = np.random.randint(cfg.batch_size, cfg.num_objs)
+            num_objs = cfg.num_objs
             objs_in_container = scene.order_objs_in_container(obj, num_objs)
         else:
             objs_in_container = []

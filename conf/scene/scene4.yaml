@@ -1,0 +1,32 @@
+defaults:
+  - container: model2
+
+simulation:
+  min_sim_time: 3
+  max_sim_time: 5
+  check_object_interval: 1
+  substeps_per_frame: 20
+  solver_iters: 25
+camera:
+  location: [-0.113, 0.05, 1.3]
+  intrinsics:
+    cx: 312.9869
+    cy: 241.3109
+    fx: 1066.778
+    fy: 1067.487
+  image_size:
+    w : 640
+    h : 480
+floor:
+  extents: [5, 5, 5]
+  location: [0, 0, -5]
+light:
+  energy : 25
+  color: [0.5, 0.5, 0.5]
+  # location: [-0.105, 0, 1.5]
+  location: [-0.4, .2, 1.5]
+light_plane:
+  emission_strength : 0.5
+  emission_color: [0.5, 0.5, 0.5, 1.0]
+  extents: [2, 2, 1]
+  location: [0, 0, 1.7]

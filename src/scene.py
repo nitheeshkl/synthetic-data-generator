@@ -9,7 +9,9 @@ from blenderproc.python.types.MeshObjectUtility import MeshObject
 from blenderproc.python.types.MaterialUtility import Material
 import blenderproc.python.camera.CameraUtility as CameraUtility
 from blenderproc.python.material import MaterialLoaderUtility
-from blenderproc.python.loader.CCMaterialLoader import CCMaterialLoader
+from blenderproc.python.loader.CCMaterialLoader import (
+    _CCMaterialLoader as CCMaterialLoader,
+)
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
@@ -66,7 +68,7 @@ class Scene:
         self.__create()
 
     def __init_camera(self) -> None:
-        """ Initialize camera for the scene. """
+        """Initialize camera for the scene."""
 
         loc = Location(*self._cfg.camera.location)
         fx, fy, cx, cy = Intrinsics(**self._cfg.camera.intrinsics)
@@ -87,41 +89,45 @@ class Scene:
         # set initial random pose
         self.add_rand_cam_pose()
 
-
     def __init_renderer(self) -> None:
-        """ Initalize render settings. """
+        """Initalize render settings."""
 
         # activate depth rendering
         bproc.renderer.enable_depth_output(activate_antialiasing=False)
         # activate normals
         # bproc.renderer.enable_normals_output()
-    
+
         bproc.renderer.set_max_amount_of_samples(50)
 
     def add_rand_cam_pose(self, frame: int = None) -> None:
-        """ Add a rander camera pose looking at the container.
+        """Add a rander camera pose looking at the container.
 
         :param frame: keyframe to add the pose into.
         """
         # Sample location
-        location = bproc.sampler.shell(center = [0, 0, 0],
-                                radius_min = 1.3,
-                                radius_max = 1.5,
-                                elevation_min = 80,
-                                elevation_max = 95,
-                                azimuth_min = 0,
-                                azimuth_max = 180,
-                                uniform_volume = True)
+        location = bproc.sampler.shell(
+            center=[0, 0, 0],
+            radius_min=1.3,
+            radius_max=1.5,
+            elevation_min=80,
+            elevation_max=95,
+            azimuth_min=0,
+            azimuth_max=180,
+            uniform_volume=True,
+        )
         # Determine point of interest in scene as the object closest to the mean of a subset of objects
         poi = bproc.object.compute_poi([self._container])
         # Compute rotation based on vector going from location towards poi
-        rotation_matrix = bproc.camera.rotation_from_forward_vec(poi - location, inplane_rot=np.random.uniform(-0.7854, 0.7854))
+        rotation_matrix = bproc.camera.rotation_from_forward_vec(
+            poi - location, inplane_rot=np.random.uniform(-0.7854, 0.7854)
+        )
         # Add homog cam pose based on location an rotation
-        cam2world_matrix = bproc.math.build_transformation_mat(location, rotation_matrix)
+        cam2world_matrix = bproc.math.build_transformation_mat(
+            location, rotation_matrix
+        )
 
         # loc = Location(*self._cfg.camera.location)
         # cam2world_matrix = bproc.math.build_transformation_mat(loc, np.eye(3))
-
 
         # cam2world_matrix = bproc.math.build_transformation_mat(np.array(loc), np.eye(3))
         bproc.camera.add_camera_pose(cam2world_matrix, frame=frame)
@@ -147,7 +153,7 @@ class Scene:
         )
 
     def __create_lighting(self) -> None:
-        """ Create scene light and light_plane """
+        """Create scene light and light_plane"""
 
         self._light = bproc.types.Light()
         self._light.set_energy(self._cfg.light.energy)
@@ -168,7 +174,7 @@ class Scene:
         self._light_plane.replace_materials(material)
 
     def __create_container(self) -> None:
-        """" Create container either by building a custom one or loading a container model. """
+        """ " Create container either by building a custom one or loading a container model."""
 
         # if there is a model_file defined in container config section
         if "model_file" in self._cfg.container:
@@ -208,13 +214,13 @@ class Scene:
             self._container.replace_materials(texture)
 
     def empty_container(self) -> None:
-        """ Deletes all objects in container. """
+        """Deletes all objects in container."""
         if self._objs_in_container:
             bproc.object.delete_multiple(self._objs_in_container)
 
-    def render(self, num_poses: int=1) -> dict:
-        """ Render the scene.
-        
+    def render(self, num_poses: int = 1) -> dict:
+        """Render the scene.
+
         :param num_poses: number of random poses to render from the scene.
 
         :return: data dict returned from blender render
@@ -234,14 +240,14 @@ class Scene:
         # Render segmentation masks (per class and per instance)
         data.update(bproc.renderer.render_segmap(map_by=["class", "instance", "name"]))
 
-        data['cam_pose'] = cam_poses
+        data["cam_pose"] = cam_poses
 
-        return data 
+        return data
 
     def drop_objs_into_container(
         self, sample_obj: MeshObject, num_objs: int, batch_size: int
     ) -> list[MeshObject, ...]:
-        """ Drop objects into the container with physics simulation.
+        """Drop objects into the container with physics simulation.
 
         :param sample_obj: The object to be replicated and dropped into the
                            container. This object instance will not be deleted, but will be moved
@@ -260,7 +266,8 @@ class Scene:
         def random_pose_func(obj: bproc.types.MeshObject) -> None:
             # TODO: improve object placing above container before dropping
             loc = np.random.normal(
-                [0, 0, 2 * self._cfg.container.extents[2]], [0.06, 0.02, 0.1],
+                [0, 0, 2 * self._cfg.container.extents[2]],
+                [0.06, 0.02, 0.1],
             )
             obj.set_location(loc)
             return
@@ -315,8 +322,8 @@ class Scene:
         return self._objs_in_container
 
     def order_objs_in_container(self, sample_object, num_objs):
-        """  Pack objects in the container in an orderly fashion.
- 
+        """Pack objects in the container in an orderly fashion.
+
         :param sample_obj: The object to be replicated and dropped into the
                            container. This object instance will not be deleted, but will be moved
                            below the container to be avoideed from camera view.
@@ -473,7 +480,7 @@ class Scene:
 
             start_x -= new_obj_x
 
-        bproc.object.delete_multiple([obj1,sample_obj] + objs_to_del)
+        bproc.object.delete_multiple([obj1, sample_obj] + objs_to_del)
 
         self._objs_in_container = objs_to_keep
 

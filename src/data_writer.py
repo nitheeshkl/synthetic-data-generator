@@ -1,4 +1,5 @@
-from concurrent.futures import process
+import blenderproc as bproc
+
 import os
 import glob
 from omegaconf import DictConfig, OmegaConf
@@ -14,6 +15,7 @@ class DataWriter:
     def __init__(self, cfg: DictConfig) -> None:
 
         self._cfg = cfg
+        self._hdf5_dir = os.path.join(cfg.output_dir, "hdf5")
         self._color_dir = os.path.join(cfg.output_dir, "rgb")
         self._depth_dir = os.path.join(cfg.output_dir, "depth")
         self._mask_dir = os.path.join(cfg.output_dir, "mask")
@@ -32,6 +34,21 @@ class DataWriter:
                 os.makedirs(d)
 
         self._file_idx = len(glob.glob(os.path.join(self._color_dir, "*.png")))
+
+    def write_data_hdf5(self, data, metadata):
+
+        data_dir = os.path.join(
+            self._hdf5_dir,
+            metadata["obj_id"],
+            metadata["pack_type"],
+            "scene_{:04d}".format(metadata["scene"]),
+        )
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+
+        bproc.writer.write_hdf5(data_dir, data, append_to_existing_output=True)
+
+        self.write_cam_data()
 
     def write_data(self, data):
 

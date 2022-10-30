@@ -29,9 +29,7 @@ from scipy.spatial.transform import Rotation as R
 def write_data(cfg, data):
 
     bproc.writer.write_hdf5(
-        os.path.join(cfg.output_dir, "hdf5"),
-        data,
-        append_to_existing_output=True
+        os.path.join(cfg.output_dir, "hdf5"), data, append_to_existing_output=True
     )
 
     # Write data in bop format
@@ -83,9 +81,9 @@ def main(cfg: DictConfig) -> None:
         if len(objs_in_container) > 0:
             data = scene.render(num_poses=cfg.dataset.num_poses_per_scene)
             metadata = {
-                "obj_id" : cfg.object.bop_dataset_name + "_" + str(cfg.object.ID),
-                "scene" : i,
-                "pack_type" : cfg.pack_type
+                "obj_id": cfg.object.bop_dataset_name + "_" + str(cfg.object.ID),
+                "scene": i,
+                "pack_type": cfg.pack_type,
             }
             data_writer.write_data_hdf5(data, metadata)
             # data_writer.write_data(data)
@@ -100,7 +98,8 @@ def main(cfg: DictConfig) -> None:
             print("no objects in container!!")
 
         end = time.time()
-        print("KLN: time per scene = ", end-start)
+        print("KLN: time per scene = ", end - start)
+
 
 if __name__ == "__main__":
     main()

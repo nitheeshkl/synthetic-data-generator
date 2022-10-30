@@ -1,0 +1,4 @@
+bop_dataset_path : "/home/kln/sandbox/cmu/repos/capstone/datasets/bop"
+bop_dataset_name: "ruapc"
+mm2m : true
+ID : 3

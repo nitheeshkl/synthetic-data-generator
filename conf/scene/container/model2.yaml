@@ -1,7 +1,8 @@
 defaults:
+  - _self_
   - base
 
-model_file : "/home/mujin/sandbox/mujin/repos/synthetic-data-generator/container_models/TP343B/model.ply"
+model_file : "/home/kln/sandbox/cmu/repos/capstone/synthetic-data-generator/container_models/TP343B/model.ply"
 extents: [0.338, 0.503, 0.287]
 thickness: 0.025
-texture_dir : "/home/mujin/sandbox/mujin/repos/BlenderProc/resources/cctextures/Plastic008/"
+texture_dir : "/home/kln/sandbox/cmu/repos/capstone/BlenderProc/resources/cctextures/Plastic008/"

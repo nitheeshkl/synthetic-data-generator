@@ -1,4 +1,6 @@
-bop_dataset_path : "/home/kln/sandbox/cmu/repos/capstone/datasets/bop"
+defaults:
+  - _self_
+  - base
+
 bop_dataset_name: "tyol"
-mm2m : true
 ID : 2

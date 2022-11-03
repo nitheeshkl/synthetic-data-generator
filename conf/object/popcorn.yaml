@@ -1,4 +1,6 @@
 defaults:
+  - _self_
   - base
 
+bop_dataset_name: "hope"
 ID : 22
